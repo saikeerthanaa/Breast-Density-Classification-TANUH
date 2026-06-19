@@ -1,34 +1,17 @@
-# Python
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
+*.pyc
 
-# ML Models & Large Data
-Ordinal_Regression/BEST_MODELS/*.pt
-baseline_LGBM/experiment/*.csv
-!baseline_LGBM/experiment/stratified_split_*.csv
+.vscode/
+.idea/
 
-# Logs
-*.log
-Ordinal_Regression/EXPERIMENTS/*.log
-
-# OS
 .DS_Store
+
+datasets/
+data/
+
+*.pth
+*.pt
+
+.ipynb_checkpoints/
+
+*.log
