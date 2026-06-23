@@ -79,19 +79,26 @@ A baseline was established using fixed feature extractors (ResNet50 [2] and Effi
 - **Limitation:** Treats density categories as independent classes, ignoring the ordinal relationship (A < B < C < D).
 
 ### Phase 2: Deep Ordinal Regression (End-to-End with ResNet50)
-Three deep ordinal regression architectures were implemented using a ResNet50 backbone [2], partially unfrozen for domain-specific refinement.
+Five deep ordinal regression architectures were implemented using a ResNet50 backbone [2], partially unfrozen for domain-specific refinement.
 
 1. **OR-NN (Ordinal Neural Network):** $K-1$ binary classifiers with independent weights predicting whether density exceeds each threshold [5].
 2. **CORAL (Consistent Rank Logits):** Shared weights with unique, rank-consistent bias terms ensuring nested probability structure [6].
 3. **CORN (Conditional Ordinal Regression):** Conditional probability framework where reaching rank $k$ is conditioned on passing all previous ranks [7].
+4. **Continuous Regression:** Treats ordinal labels as continuous targets, optimizing a regression loss directly over the rank space.
+5. **Frank & Hall Binary Decomposition:** Decomposes the $K$-class ordinal problem into $K-1$ binary classifiers following the Frank & Hall framework [5].
 
-### Phase 3: Advanced Backbone Ordinal Regression (ConvNeXt + CORAL)
+### Phase 3: Advanced Backbone Ordinal Regression (ConvNeXt-Tiny + CORAL)
 The ResNet50 backbone was replaced with **ConvNeXt-Tiny** [8].
 - **Architecture:** Incorporates inverted bottlenecks, larger kernel sizes ($7\times7$), and Layer Normalization — design principles inspired by Vision Transformers [9].
 - **Objective:** Improve fine-grained parenchymal feature extraction for the CORAL ordinal head.
 
-### Phase 4: Cross-Population Adaptation (ConvNeXt + CORAL on IBIA)
-The EMBED-trained ConvNeXt + CORAL model was evaluated and adapted on IBIA using the same adaptation strategies as ResNet + CORAL, to assess whether architectural improvements translate to better cross-population transferability.
+### Phase 4: Cross-Population Adaptation (ConvNeXt-Tiny + CORAL on IBIA)
+The EMBED-trained ConvNeXt-Tiny + CORAL model was evaluated and adapted on IBIA using the same adaptation strategies as ResNet + CORAL, to assess whether architectural improvements translate to better cross-population transferability.
+
+### Phase 5: ConvNeXt-Small + CORN and Analytic Prior Correction
+Two further experiments were conducted:
+- **ConvNeXt-Small + CORN:** The CORN conditional ordinal loss was applied with a **ConvNeXt-Small** backbone on EMBED, achieving the highest in-distribution Kappa (0.8067). Note that this experiment changes both the backbone (Tiny → Small) and the loss (CORAL → CORN) relative to Phase 3; a controlled ablation separating these two factors is ongoing.
+- **Analytic Prior Correction (Zero-shot):** A training-free post-hoc correction was applied to the ConvNeXt-Tiny + CORAL zero-shot predictions on IBIA. Log-odds of the EMBED class prior are subtracted from the model's output logits to counteract the source-domain bias — requiring no IBIA labels whatsoever [13].
 
 ---
 
@@ -123,28 +130,43 @@ Freezing the backbone and retraining only the CORAL head on 20% IBIA data yielde
 **Technical Conclusion:** A large fraction of domain shift is attributable to miscalibrated decision thresholds rather than inadequate features, especially for ConvNeXt whose features are inherently more expressive.
 
 ### Inference 5: Representation Capacity of ConvNeXt-Tiny
-ConvNeXt-Tiny achieves the highest EMBED Kappa (0.8020) using only the simplest ordinal loss (CORAL), outperforming ResNet with more complex losses.
+ConvNeXt-Tiny achieves EMBED Kappa 0.8020 using only the simplest ordinal loss (CORAL), outperforming all ResNet variants including those with more complex losses.
 
 **Technical Conclusion:** ConvNeXt's transformer-inspired design excels at capturing fine-grained diffuse parenchymal patterns, providing more discriminative density boundaries [8].
 
-### Inference 6: ConvNeXt Adaptation Superiority
-Despite lower zero-shot Kappa (0.4514 vs 0.4844), ConvNeXt + CORAL outperforms ResNet + CORAL under both adaptation strategies.
+### Inference 6: ConvNeXt-Tiny Adaptation Superiority
+Despite lower zero-shot Kappa (0.4514 vs 0.4844), ConvNeXt-Tiny + CORAL outperforms ResNet50 + CORAL under both adaptation strategies.
 
 **Technical Conclusion:** ConvNeXt encodes richer, more transferable representations that are initially over-biased toward EMBED priors but adapt rapidly with minimal target-domain data. **Backbone capacity is the dominant factor for adapted cross-population performance.**
+
+### Inference 7: Efficacy of Label-Free Prior Correction
+Analytic prior correction — subtracting EMBED log-prior from output logits — lifts zero-shot Kappa from 0.4514 to 0.5405 (+0.089) without accessing any IBIA labels.
+
+**Technical Conclusion:** A substantial portion of the zero-shot error is attributable to a miscalibrated source prior rather than inadequate features. Prior correction provides a meaningful, label-free baseline that narrows the gap to supervised recalibration, consistent with findings in [13] on the advantages of ordinal methods under domain shift.
+
+### Inference 8: ConvNeXt-Small + CORN Achieves Best In-Distribution Performance
+ConvNeXt-Small + CORN achieves Kappa 0.8067 and MAE 0.2156 on EMBED, the highest of any model tested. However, this experiment simultaneously upgrades both the backbone (ConvNeXt-Tiny → Small) and the loss (CORAL → CORN) relative to Phase 3. The individual contributions of backbone capacity vs. loss function cannot be disentangled from these results alone.
+
+**Technical Conclusion:** The ConvNeXt-Small + CORN combination yields the strongest in-distribution performance. A controlled ablation (ConvNeXt-Small + CORAL) is required to isolate whether the gain is driven by the larger backbone, the CORN loss, or both. This ablation is currently in progress.
 
 ---
 
 ## 6. Performance on EMBED (Training Domain)
 
-| Method | Accuracy | Quadratic Kappa | MAE |
-| :--- | :---: | :---: | :---: |
-| **ResNet50 + LGBM (Baseline)** [2] | 0.6941 | ~0.72 | 0.35 |
-| **ResNet50 + CORAL** [6] | 0.7335 | 0.7833 | 0.2700 |
-| **ResNet50 + CORN** [7] | **0.7740** | 0.7884 | **0.2279** |
-| **ResNet50 + OR-NN** [5] | 0.7508 | 0.8008 | 0.2508 |
-| **ConvNeXt + CORAL (Proposed)** [6, 8] | 0.7663 | **0.8020** | 0.2361 |
+| Method | Backbone | Accuracy | Quadratic Kappa | MAE |
+| :--- | :---: | :---: | :---: | :---: |
+| **ResNet50 + LGBM (Baseline)** [2] | ResNet50 | 0.6941 | ~0.72 | 0.35 |
+| **ResNet50 + Continuous Regression** | ResNet50 | 0.7681 | 0.7918 | — |
+| **ResNet50 + Frank & Hall Binary** [5] | ResNet50 | 0.7775 | 0.7946 | — |
+| **ResNet50 + CORAL** [6] | ResNet50 | 0.7335 | 0.7833 | 0.2700 |
+| **ResNet50 + CORN** [7] | ResNet50 | **0.7740** | 0.7884 | **0.2279** |
+| **ResNet50 + OR-NN** [5] | ResNet50 | 0.7508 | 0.8008 | 0.2508 |
+| **ConvNeXt-Tiny + CORAL** [6, 8] | ConvNeXt-Tiny | 0.7663 | 0.8020 | 0.2361 |
+| **ConvNeXt-Small + CORN** † [7, 8] | ConvNeXt-Small | 0.7873 | **0.8067** | **0.2156** |
 
-*ConvNeXt + CORAL achieves the highest Quadratic Kappa (0.8020) using the simplest ordinal loss, showing that backbone capacity drives meaningful gains independent of loss complexity.*
+† Backbone and loss both differ from ConvNeXt-Tiny + CORAL; individual contributions are not yet disentangled. Ablation (ConvNeXt-Small + CORAL) in progress.
+
+*ConvNeXt-Small + CORN achieves the highest Quadratic Kappa (0.8067) and lowest MAE (0.2156). ConvNeXt-Tiny + CORAL already surpasses all ResNet variants using the simplest ordinal loss, demonstrating that backbone capacity drives meaningful gains.*
 
 ---
 
@@ -159,15 +181,27 @@ Despite lower zero-shot Kappa (0.4514 vs 0.4844), ConvNeXt + CORAL outperforms R
 | **Head-Only Recalibration** | 0.5746 | Efficient adaptation via threshold shifting. |
 | **Differential Fine-tuning** | 0.5971 | Optimal (Backbone 1e-5, Head 1e-3). |
 
-### ConvNeXt + CORAL (EMBED → IBIA)
+### ConvNeXt-Tiny + CORAL (EMBED → IBIA)
 
-| Strategy | Quadratic Kappa | Accuracy | MAE | vs. ResNet |
-| :--- | :---: | :---: | :---: | :---: |
-| **Zero-shot** | 0.4514 | 0.4217 | 0.6301 | -0.033 |
-| **Head-Only Recalibration** | 0.6258 | 0.6579 | 0.3553 | **+0.051** |
-| **Differential Fine-tuning** | **0.6535** | **0.6723** | **0.3417** | **+0.056** |
+| Strategy | Quadratic Kappa | Accuracy | MAE | vs. ResNet CORAL | Uses IBIA Labels? |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **Zero-shot** | 0.4514 | 0.4217 | 0.6301 | -0.033 | No |
+| **Prior Correction (Zero-shot)** [13] | 0.5405 | 0.5797 | 0.4393 | +0.056 | No |
+| **Head-Only Recalibration** | 0.6258 | 0.6579 | 0.3553 | +0.051 | Yes (20%) |
+| **Differential Fine-tuning** | **0.6535** | **0.6723** | **0.3417** | **+0.056** | Yes (20%) |
 
-*ConvNeXt + CORAL differential fine-tuning achieves the best overall cross-population result, surpassing ResNet's best by +0.056 Kappa.*
+*Prior correction yields a Kappa gain of +0.089 over zero-shot with zero labeled target data. ConvNeXt-Tiny + CORAL differential fine-tuning achieves the best overall adapted cross-population result, surpassing ResNet's best by +0.056 Kappa.*
+
+### ConvNeXt-Small + CORN (EMBED → IBIA)
+
+| Strategy | Quadratic Kappa | Accuracy | MAE | vs. ConvNeXt-Tiny + CORAL | Uses IBIA Labels? |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **Zero-shot** | 0.4427 | 0.4068 | 0.6442 | -0.009 | No |
+| **Prior Correction** | — | — | — | — | No |
+| **Head-Only Recalibration** | — | — | — | — | Yes (20%) |
+| **Differential Fine-tuning** | — | — | — | — | Yes (20%) |
+
+*IBIA adaptation experiments for ConvNeXt-Small + CORN are in progress. Zero-shot Kappa (0.4427) is marginally lower than ConvNeXt-Tiny + CORAL (0.4514), consistent with the pattern that a stronger in-distribution model is not necessarily better zero-shot. Note: Fatty recall is severely degraded (0.193) — only 218/1128 Fatty cases correctly classified, with 757 pushed to Scattered, indicating stronger over-prediction bias than CORAL zero-shot.*
 
 ---
 
@@ -216,7 +250,9 @@ Despite lower zero-shot Kappa (0.4514 vs 0.4844), ConvNeXt + CORAL outperforms R
 
 ---
 
-## 9. ConvNeXt + CORAL Per-Class Analysis (EMBED)
+## 9. ConvNeXt Per-Class Analysis (EMBED)
+
+### ConvNeXt-Tiny + CORAL
 
 | BI-RADS Category | Precision | Recall | F1-Score | Support |
 | :--- | :---: | :---: | :---: | :---: |
@@ -230,16 +266,33 @@ Key observations:
 - Recall is balanced across all classes (0.75–0.79), showing no class-imbalance bias.
 - Lower precision on extreme categories (Fatty: 0.59, Dense: 0.62) reflects inherent boundary ambiguity between adjacent BI-RADS categories [1].
 
+### ConvNeXt-Small + CORN
+
+| BI-RADS Category | Precision | Recall | F1-Score | Support |
+| :--- | :---: | :---: | :---: | :---: |
+| **Fatty (A)** | 0.68 | 0.69 | 0.68 | 388 |
+| **Scattered (B)** | 0.78 | 0.77 | 0.78 | 1525 |
+| **Heterogeneous (C)** | 0.83 | 0.84 | 0.83 | 1623 |
+| **Dense (D)** | 0.71 | 0.73 | 0.72 | 216 |
+
+Key observations:
+- Per-class metrics improve across all categories relative to ConvNeXt-Tiny + CORAL, particularly at the extremes (Fatty precision: 0.68 vs 0.59, Dense precision: 0.71 vs 0.62).
+- Macro F1 improves from 0.736 (ConvNeXt-Tiny + CORAL) to 0.752 (ConvNeXt-Small + CORN).
+- These gains reflect the combined effect of a larger backbone (Small vs Tiny) and the CORN loss; they cannot be attributed to either factor independently without a controlled ablation.
+
 ---
 
 ## 10. Summary of Findings
 
 | Finding | Result |
 | :--- | :--- |
-| Best in-distribution (EMBED) | ConvNeXt + CORAL, Kappa **0.8020** |
-| Best zero-shot cross-population (IBIA) | ResNet + CORAL, Kappa **0.4844** |
-| Best adapted cross-population (IBIA) | ConvNeXt + CORAL + Diff. FT, Kappa **0.6535** |
-| Most efficient adaptation | ConvNeXt + CORAL head recalibration (+0.174 Kappa, <1% params updated) |
+| Best in-distribution (EMBED) | ConvNeXt-Small + CORN, Kappa **0.8067**, MAE **0.2156** † |
+| Best zero-shot cross-population (IBIA) | ResNet50 + CORAL, Kappa **0.4844** |
+| Best label-free cross-population (IBIA) | ConvNeXt-Tiny + CORAL + Prior Correction, Kappa **0.5405** (+0.089 over zero-shot) |
+| Best adapted cross-population (IBIA) | ConvNeXt-Tiny + CORAL + Diff. FT, Kappa **0.6535** |
+| Most efficient adaptation | ConvNeXt-Tiny + CORAL head recalibration (+0.174 Kappa, <1% params updated) |
+
+† Backbone (Tiny→Small) and loss (CORAL→CORN) co-vary; ablation in progress.
 
 ---
 
@@ -250,36 +303,42 @@ Key observations:
   - `train_convnext.py` — Training script.
   - `test_convnext.py` — Evaluation script.
   - `results.txt` — Metrics and confusion matrix.
+- `ConvNeXt_CORN/` — Training and evaluation scripts for ConvNeXt + CORN.
+  - `convnext_corn_best_metrics.json` — Best checkpoint metrics.
 - `Ordinal_Regression/`
-  - `BEST_MODELS/` — Serialized weights for CORAL, CORN, OR-NN, and ConvNeXt + CORAL.
+  - `BEST_MODELS/` — Serialized weights for CORAL, CORN, OR-NN, ConvNeXt + CORAL, and ConvNeXt + CORN.
   - `EXPERIMENTS/` — Training logs and hyperparameter details.
-  - `RESULTS/` — Metrics, confusion matrices, and t-SNE visualizations.
+  - `RESULTS/` — Metrics, confusion matrices, t-SNE visualizations, and prior correction results.
 - `sample_images/` — Representative PNG samples from EMBED and IBIA cohorts.
-- `mammography-datasets/analysis/` — All training, evaluation, and adaptation scripts.
+- `mammography-datasets/analysis/` — All training, evaluation, adaptation, and prior correction scripts.
 
 ---
 
 
 ## 12. References
 
-[1] Kumari and Singh (2024). *Deep Learning for Unsupervised Domain Adaptation in Medical Imaging: Recent Advancements and Future Perspectives.*
+[1] D'Orsi et al. (2013). *ACR BI-RADS Atlas, Breast Imaging Reporting and Data System.* American College of Radiology.
 
-[2] Squires et al. (2024). *Model Uncertainty Estimates for Deep Learning Mammographic Density Prediction Using Ordinal and Classification Approaches.*
+[2] He et al. (2016). *Deep Residual Learning for Image Recognition.* CVPR.
 
-[3] Ganin et al. (2016). *Domain-Adversarial Training of Neural Networks.*
+[3] Tan and Le (2019). *EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks.* ICML.
 
-[4] Sun and Saenko (2016). *Deep CORAL: Correlation Alignment for Deep Domain Adaptation.*
+[4] Deng et al. (2009). *ImageNet: A Large-Scale Hierarchical Image Database.* CVPR.
 
-[5] Schmidt et al. (2024). *Fair Evaluation of Federated Learning Algorithms for Automated Breast Density Classification: The Results of the 2022 ACR-NCI-NVIDIA Federated Learning Challenge.*
+[5] Frank and Hall (2001). *A Simple Approach to Ordinal Classification.* ECML. *(OR-NN / Frank & Hall binary decomposition)*
 
-[6] Niu et al. (2016). *Ordinal Regression with Multiple Output CNN for Age Estimation.*
+[6] Cao et al. (2020). *Rank Consistent Ordinal Regression for Neural Networks with Application to Age Estimation.* Pattern Recognition Letters. *(CORAL)*
 
-[7] Yoon et al. (2023). *Domain Generalization for Medical Image Analysis: A Review.*
+[7] Shi et al. (2023). *Deep Neural Networks for Rank-Consistent Ordinal Regression Based on Conditional Probabilities.* TPAMI. *(CORN)*
 
 [8] Molina-Roman et al. (2025). *Comparison of ConvNeXt and Vision-Language Models for Breast Density Assessment in Screening Mammography.*
 
-[9] Liu et al. (2022). *A ConvNet for the 2020s.*
+[9] Liu et al. (2022). *A ConvNet for the 2020s.* CVPR.
 
-[10] Lin et al. (2017). *Focal Loss for Dense Object Detection.*
+[10] Lin et al. (2017). *Focal Loss for Dense Object Detection.* ICCV.
 
-[11] Zha et al. (2023). *Rank-N-Contrast: Learning Continuous Representations for Regression.*
+[11] Zha et al. (2023). *Rank-N-Contrast: Learning Continuous Representations for Regression.* NeurIPS.
+
+[12] Squires et al. (2024). *Model Uncertainty Estimates for Deep Learning Mammographic Density Prediction Using Ordinal and Classification Approaches.*
+
+[13] Perrett, Brown, and Bosilj. *The Benefits of Ordinal Regression Under Domain Shift.* University of Lincoln.
