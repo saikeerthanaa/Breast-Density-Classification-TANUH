@@ -1,0 +1,30 @@
+{
+    "ibia": {
+        "name": "IBIA Imbalanced",
+        "total": 3577,
+        "ce_errors": 2379,
+        "coral_fixes": 678,
+        "correction_rate": 28.49936948297604,
+        "coral_still_wrong": 1701,
+        "both_correct": 1029,
+        "both_wrong": 1701,
+        "ce_correct_coral_wrong": 169,
+        "minority_total_errors": 398,
+        "minority_fixed": 12,
+        "minority_fix_rate": 3.015075376884422
+    },
+    "vindr": {
+        "name": "VinDr Imbalanced",
+        "total": 20000,
+        "ce_errors": 9533,
+        "coral_fixes": 3350,
+        "correction_rate": 35.14108884926046,
+        "coral_still_wrong": 6183,
+        "both_correct": 8401,
+        "both_wrong": 6183,
+        "ce_correct_coral_wrong": 2066,
+        "minority_total_errors": 269,
+        "minority_fixed": 112,
+        "minority_fix_rate": 41.63568773234201
+    }
+}

@@ -1,0 +1,74 @@
+{
+  "IBIA": {
+    "overall": {
+      "ce_kappa": 0.641914191419142,
+      "ce_acc": 0.4852941176470588,
+      "ce_f1": 0.48499723604201217,
+      "coral_kappa": 0.7193251533742331,
+      "coral_acc": 0.5514705882352942,
+      "coral_f1": 0.5504877142009825
+    },
+    "ce_errors_analysis": {
+      "total_errors": 140,
+      "recovered": 34,
+      "recovery_rate": 24.285714285714285,
+      "ce_mae": 1.1642857142857144,
+      "coral_mae": 0.8857142857142857,
+      "distribution": {
+        "Same distance": 96,
+        "Corrected": 34,
+        "Closer": 7,
+        "Further": 3
+      }
+    },
+    "coral_errors_analysis": {
+      "total_errors": 122,
+      "recovered": 16,
+      "recovery_rate": 13.114754098360656,
+      "coral_mae": 1.1557377049180328,
+      "ce_mae": 1.0573770491803278,
+      "distribution": {
+        "Same distance": 96,
+        "Corrected": 16,
+        "Further": 7,
+        "Closer": 3
+      }
+    }
+  },
+  "VinDr": {
+    "overall": {
+      "ce_kappa": 0.7471655328798186,
+      "ce_acc": 0.555,
+      "ce_f1": 0.5262756656265412,
+      "coral_kappa": 0.7822222222222223,
+      "coral_acc": 0.59,
+      "coral_f1": 0.570676076094423
+    },
+    "ce_errors_analysis": {
+      "total_errors": 178,
+      "recovered": 35,
+      "recovery_rate": 19.662921348314608,
+      "ce_mae": 1.0842696629213484,
+      "coral_mae": 0.8595505617977528,
+      "distribution": {
+        "Same distance": 124,
+        "Corrected": 35,
+        "Closer": 12,
+        "Further": 7
+      }
+    },
+    "coral_errors_analysis": {
+      "total_errors": 164,
+      "recovered": 21,
+      "recovery_rate": 12.804878048780488,
+      "coral_mae": 1.0609756097560976,
+      "ce_mae": 0.9634146341463414,
+      "distribution": {
+        "Same distance": 124,
+        "Corrected": 21,
+        "Further": 12,
+        "Closer": 7
+      }
+    }
+  }
+}

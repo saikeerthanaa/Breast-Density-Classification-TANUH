@@ -1,0 +1,38 @@
+{
+  "overall_comparison": {
+    "ce_only": {
+      "kappa": 0.4889408463777498,
+      "accuracy": 0.450377411238468
+    },
+    "coral": {
+      "kappa": 0.5300147810652112,
+      "accuracy": 0.4805703103159072
+    }
+  },
+  "misclassification_analysis_ce_errors": {
+    "total_ce_misclassified": 1966,
+    "total_coral_recovered": 464,
+    "recovery_rate": 23.60122075279756,
+    "ce_mae_on_errors": 1.1200406917599186,
+    "coral_mae_on_errors": 0.8484231943031536,
+    "coral_behavior_distribution": {
+      "Same distance": 1392,
+      "Corrected": 464,
+      "Closer": 84,
+      "Further": 26
+    }
+  },
+  "misclassification_analysis_coral_errors": {
+    "total_coral_misclassified": 1858,
+    "total_ce_recovered": 356,
+    "recovery_rate": 19.16038751345533,
+    "coral_mae_on_errors": 0.8484231943031536,
+    "ce_mae_on_errors": 0.930032292787944,
+    "ce_behavior_distribution": {
+      "Same distance": 1392,
+      "Corrected": 356,
+      "Further": 84,
+      "Closer": 26
+    }
+  }
+}
