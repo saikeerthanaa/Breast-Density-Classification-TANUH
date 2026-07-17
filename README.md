@@ -12,13 +12,13 @@
 
 This study validates ordinal regression methods (CORAL, CORN) for cross-geographic breast density classification under domain shift. Models trained on the US-based EMBED dataset are evaluated zero-shot on Indian (IBIA) and Vietnamese (VinDr) datasets across both imbalanced (realistic) and balanced (controlled) conditions.
 
-**Primary Findings:** Ordinal regression significantly outperforms standard cross-entropy classification under zero-shot transfer. On the imbalanced cohorts, ConvNeXt + CORAL achieves **0.5303** kappa on the Indian (IBIA) dataset (versus **0.3923** for ResNet50 + CE, representing a `+0.138` absolute / `+35.1%` relative improvement) and **0.4753** kappa on the Vietnamese (VinDr) dataset (versus **0.4278** for ResNet50 + CE, representing a `+0.048` absolute / `+11.1%` relative improvement). This improvement persists across different class distributions and imbalance severities, demonstrating that ordinal regression exploits inherent class ordering (A < B < C < D) to maintain predictive performance despite domain shift, whereas cross-entropy learning creates domain-specific decision boundaries that don't transfer.
+**Primary Findings:** Ordinal regression outperforms standard cross-entropy classification under zero-shot transfer. On the imbalanced cohorts, ConvNeXt + CORAL achieves **0.5303** kappa on the Indian (IBIA) dataset (versus **0.3923** for ResNet50 + CE, representing a `+0.138` absolute / `+35.1%` relative difference) and **0.4753** kappa on the Vietnamese (VinDr) dataset (versus **0.4278** for ResNet50 + CE, representing a `+0.048` absolute / `+11.1%` relative difference). This behavior is observed across different class distributions and imbalance levels, indicating that ordinal regression utilizes the inherent class ordering (A < B < C < D) under domain shift, whereas cross-entropy learning treats classes as independent nominal categories.
 
 ---
 
 ## 1. Introduction
 
-Breast density is a significant risk factor for breast cancer and can obscure lesions on screening mammography. The ACR BI-RADS classification system categorizes density into four ordinal categories (A: Fatty, B: Scattered, C: Heterogeneous, D: Dense). While deep learning models achieve high performance on source populations, deployment across different geographic cohorts reveals substantial performance degradation due to domain shift in anatomical features and class distributions. This challenge is highly pronounced in large-scale multi-institutional settings, such as the ACR-NCI-NVIDIA Federated Learning Challenge, where automated density classifiers exhibited severe performance drops on external validation cohorts (Schmidt et al., 2024).
+Breast density is a risk factor for breast cancer and can obscure lesions on screening mammography. The ACR BI-RADS classification system categorizes density into four ordinal categories (A: Fatty, B: Scattered, C: Heterogeneous, D: Dense). While deep learning models achieve high performance on source populations, deployment across different geographic cohorts reveals performance degradation due to domain shift in anatomical features and class distributions. This challenge is observed in multi-institutional settings, such as the ACR-NCI-NVIDIA Federated Learning Challenge, where automated density classifiers exhibited performance drops on external validation cohorts (Schmidt et al., 2024).
 
 ### Research Motivation
 
@@ -185,7 +185,7 @@ Both methods enforce rank-consistent predictions where P(Y≥k) ≥ P(Y≥k+1), 
 | ConvNeXt + CORAL | 0.5303 | 47.7% | 0.443 | 79.4% |
 | ConvNeXt + CORN | 0.5030 | 43.6% | 0.413 | 88.2% |
 
-**Key Finding:** CORAL outperforms CE by +0.1380 kappa (+35.1%), with CORN providing +0.1107 kappa (+28.2%).
+**Observation:** CORAL outperforms the ResNet50 + CE baseline by +0.1380 kappa (+35.1%), with CORN showing +0.1107 kappa (+28.2%).
 
 #### India (IBIA) Balanced Condition (272 samples, 25%-25%-25%-25%)
 
@@ -196,7 +196,7 @@ Both methods enforce rank-consistent predictions where P(Y≥k) ≥ P(Y≥k+1), 
 | ConvNeXt + CORAL | 0.7165 | 54.0% | 0.538 |
 | ConvNeXt + CORN | 0.6814 | 53.7% | 0.523 |
 
-**Key Finding:** CORAL outperforms CE by +0.1499 kappa (+26.5%), indicating that under balanced conditions, the model's learned features are substantially more discriminative than imbalanced condition suggests.
+**Observation:** CORAL outperforms the ResNet50 + CE baseline by +0.1499 kappa (+26.5%), indicating higher performance under balanced conditions.
 
 #### Vietnam (VinDr) Imbalanced Condition (20,000 samples, 0.5%-9.5%-76.5%-13.5%)
 
@@ -209,7 +209,7 @@ Both methods enforce rank-consistent predictions where P(Y≥k) ≥ P(Y≥k+1), 
 
 *\*Note: ConvNeXt + CE was evaluated on a representative 3,000 image subsample of the VinDr Imbalanced dataset. For a direct comparison on this exact subsample: ResNet50 + CE yields 0.4108 Kappa, ConvNeXt + CORAL yields 0.4791 Kappa, and ConvNeXt + CORN yields 0.4485 Kappa.*
 
-**Key Finding:** CORAL outperforms CE by +0.0475 kappa (+11.1%), demonstrating persistent ordinal advantage despite extreme C-dominant distribution (76.5% class prevalence).
+**Observation:** CORAL outperforms the ResNet50 + CE baseline by +0.0475 kappa (+11.1%) under a C-dominant distribution (76.5% class prevalence).
 
 #### Vietnam (VinDr) Balanced Condition (400 samples, 25%-25%-25%-25%)
 
@@ -220,7 +220,7 @@ Both methods enforce rank-consistent predictions where P(Y≥k) ≥ P(Y≥k+1), 
 | ConvNeXt + CORAL | 0.7859 | 59.5% | 0.575 |
 | ConvNeXt + CORN | 0.7629 | 58.8% | 0.565 |
 
-**Key Finding:** CORAL outperforms CE by +0.0400 kappa (+5.4%), with diminished advantage in balanced conditions, suggesting ordinal benefit is most pronounced under realistic imbalanced distributions.
+**Observation:** CORAL outperforms the ResNet50 + CE baseline by +0.0400 kappa (+5.4%) in balanced conditions.
 
 ### 4.3 Per-Class Performance and Statistical Significance (Balanced Cohorts)
 
@@ -251,7 +251,7 @@ To evaluate the fine-grained impact of ordinal constraints, we perform per-class
   - *Both Incorrect:* 106 cases
 - **Chi-Squared Statistic:** 5.7800
 - **p-value:** 1.6210e-02 (0.0162)
-- **Conclusion:** **Statistically Significant (p < 0.05)**. Ordinal constraints yield a systematic correction pattern over nominal classification.
+- **Conclusion:** Statistically Significant (p < 0.05). Ordinal constraints show a different error distribution compared to nominal classification.
 
 #### B. Vietnamese Cohort (VinDr Balanced, N = 400)
 
@@ -278,7 +278,7 @@ To evaluate the fine-grained impact of ordinal constraints, we perform per-class
   - *Both Incorrect:* 143 cases
 - **Chi-Squared Statistic:** 3.0179
 - **p-value:** 8.2352e-02 (0.0824)
-- **Conclusion:** Not Statistically Significant (p >= 0.05) under balanced sample size, though showcasing positive recall gains in sparse clinical classes (A and B).
+- **Conclusion:** Not Statistically Significant (p >= 0.05) under balanced sample size, though showing differences in recall for class A and B.
 
 ### 4.4 Error Overlap & Correction Analysis (Imbalanced Cohorts)
 
@@ -315,10 +315,10 @@ By comparing models sharing the same ConvNeXt-Small backbone, we isolate the dir
 
 *\*Note: Evaluated on the representative 3,000 image subsample of the VinDr Imbalanced cohort.*
 
-#### Critical Insights:
-1. **Systematic Error Correction:** Upgrading the backbone and loss function simultaneously corrects **28.50%** of errors on IBIA and **35.14%** on VinDr. Isolating the loss function on the same ConvNeXt backbone reveals that the ordinal constraint alone accounts for a **23.60%** error correction rate on IBIA and a **14.29%** error correction rate on VinDr.
-2. **Minority Class Preservation:** On VinDr, where Class A (Fatty) is extremely rare (0.5% prevalence), standard CE fails to detect it reliably, yielding 269 errors. CORAL recovers **112** of these cases, showing a high correction rate of **41.64%** for clinical anomalies.
-3. **Accuracy Trade-off:** Ordinal regularization limits severe errors (deviations > 1 rank) but can lead to minor off-diagonal boundary shifts, resulting in CORAL misclassifying a small fraction of cases that CE got correct (356 in IBIA, 374 in VinDr on the subsample). This trade-off is particularly evident on VinDr Imbalanced, where the extreme majority class (76.5% Class C) skews overall nominal accuracy in favor of CE's unconstrained decision boundaries.
+#### Observations:
+1. **Error Correction Analysis:** Upgrading the backbone and loss function simultaneously corrects **28.50%** of errors on IBIA and **35.14%** on VinDr. Isolating the loss function on the same ConvNeXt backbone shows that the ordinal constraint alone accounts for a **23.60%** error correction rate on IBIA and a **14.29%** error correction rate on VinDr.
+2. **Minority Class Recall:** On VinDr, where Class A (Fatty) has 0.5% prevalence, standard CE yields 269 errors on this class. CORAL recovers **112** of these cases.
+3. **Accuracy Trade-off:** Ordinal regularization reduces severe errors (deviations > 1 rank) but can lead to boundary shifts, resulting in CORAL misclassifying some cases that CE predicted correctly (356 in IBIA, 374 in VinDr on the subsample). This is observed on VinDr Imbalanced, where the majority class (76.5% Class C) affects overall accuracy.
 
 ---
 
@@ -333,9 +333,9 @@ To analyze the distribution of representations across geographies, we project th
 | ![ResNet50 + CE t-SNE](./sample_images/tsne_domain_shift_ce.png) | ![ConvNeXt + CORAL t-SNE](./sample_images/tsne_domain_shift.png) |
 | *CE Feature Space: Complete cluster isolation with domain-specific clusters.* | *CORAL Feature Space: Latent clusters remain separated, but rank relationships are preserved across cohorts.* |
 
-**Technical Analysis & Observations:**
-1. **No Domain Alignment:** In both representations, **EMBED (USA)**, **IBIA (India)**, and **VinDr (Vietnam)** cohorts form distinct, non-overlapping clusters. This shows that the models do not physically align the features of the different domains; the domain shift (representing scanner characteristics, demographics, and imaging styles) remains fully separated.
-2. **Rank-Aware Generalization:** Although the feature representations of the three domains remain separated, the primary benefit of ordinal regression (CORAL) is its ability to exploit the inherent class ordering (A < B < C < D) to structure the representation space consistently across all domains. In contrast, Cross-Entropy creates disjoint representation boundaries that do not preserve this rank structure, leading to poor zero-shot transfer.
+**Observations:**
+1. **Domain Alignment:** In both representations, **EMBED (USA)**, **IBIA (India)**, and **VinDr (Vietnam)** cohorts form separate clusters. This indicates that the models do not align the features of the different domains directly; the domain differences remain.
+2. **Rank-Aware Representation:** Although the feature representations of the three domains remain separate, ordinal regression (CORAL) uses the class ordering (A < B < C < D) to structure the representation space. In contrast, Cross-Entropy creates representation boundaries that do not preserve this sequence.
 
 ### 5.2 Confusion Matrices
 
@@ -411,42 +411,40 @@ To explain why ConvNeXt + CORAL generalizes better under geographic domain shift
 | ResNet50 + CE (Baseline) | ConvNeXt + CORAL (Ordinal) |
 | :---: | :---: |
 | ![ResNet50 CE SHAP VinDr](./sample_images/resnet50_shap_vindr.png) | ![ConvNeXt CORAL SHAP VinDr](./sample_images/convnext_coral_shap_vindr.png) |
-| *Scattered focus (Focus Energy: 0.5440). High sensitivity to scanner style shifts and text labels.* | *Highly localized, concentrated focus (Focus Energy: 0.4248). Focuses on breast tissue density structures.* |
+| *Scattered focus (Focus Energy: 0.5440). Sensitivity to scanner style shifts and text labels.* | *Localized focus (Focus Energy: 0.4248). Focuses on breast tissue density structures.* |
 
-**Interpretability Key Findings:**
-- **Feature Focusing (Focus Energy Metric):** The standard nominal classifier (ResNet50 + CE) exhibits a lower-energy, scattered focus pattern (Focus: 0.3174 on IBIA, 0.5440 on VinDr). It attends heavily to low-level scanner-specific background noise and peripheral artifact regions, making it sensitive to style shifts.
-- **Rank-Aware Focus:** In contrast, ConvNeXt + CORAL displays a highly localized, concentrated focus pattern (Focus: 0.5886 on IBIA, 0.4248 on VinDr) targeting specific fibroglandular density structures inside the breast canvas. The ordinal CORAL loss biases the model towards anatomically relevant density patterns rather than learning domain-invariant representation space, which allows it to maintain rank-ordering consistency across different scanner types and cohorts.
+**Interpretability Observations:**
+- **Feature Focusing:** The nominal classifier (ResNet50 + CE) exhibits a lower focus energy (0.3174 on IBIA, 0.5440 on VinDr), attending to background noise and peripheral regions.
+- **Rank-Aware Focus:** ConvNeXt + CORAL displays a localized focus pattern (0.5886 on IBIA, 0.4248 on VinDr) targeting fibroglandular density structures. The ordinal CORAL loss biases the model towards density patterns, which correlates with rank-ordering consistency across scanner types.
 
----
+## 6. Summary of Findings
 
-## 6. Key Findings
-
-### Finding 1: Inherent Class Ordering Enhances Robustness to Domain Shift
+### Section 6.1: Class Ordering and Domain Transfer
 
 **Evidence:**
-- India (moderate shift): +35.1% kappa improvement
-- Vietnam (extreme shift): +11.1% kappa improvement
-- Robust performance across different class distributions and imbalances.
+- India (moderate shift): +35.1% relative difference in Kappa
+- Vietnam (extreme shift): +11.1% relative difference in Kappa
+- Consistent performance differences across class distributions.
 
-**Mechanism:** Instead of attempting to align domain distributions directly, ordinal regression exploits the intrinsic sequence (A < B < C < D) to structure its predictions. This allows the model to maintain rank consistency even when evaluated on out-of-distribution cohorts where feature spaces remain distinct. Cross-entropy learning, on the other hand, treats classes as independent categories, leading to decision boundaries that fail to transfer.
+**Mechanism:** Rather than aligning domain distributions directly, ordinal regression utilizes the sequence (A < B < C < D) to structure predictions. The model preserves rank ordering when evaluated on external cohorts. Cross-entropy learning treats classes as independent, which leads to different decision boundaries.
 
-**Quantitative Support:** Only 0.24% of CORAL predictions deviate by more than one ordinal rank across all conditions, confirming strict ordinal constraint enforcement.
+**Quantitative Support:** Under CORAL, 0.24% of predictions deviate by more than one rank across conditions.
 
-### Finding 2: Balanced Condition Reveals True Model Capability
+### Section 6.2: Evaluation under Balanced vs. Imbalanced Conditions
 
 **Data:**
 - IBIA Imbalanced: 0.5303 kappa (ConvNeXt+CORAL)
-- IBIA Balanced: 0.7165 kappa (same model, controlled distribution)
-- Performance gap: +0.1862 kappa (+35% relative improvement)
+- IBIA Balanced: 0.7165 kappa (same model)
+- Difference: +0.1862 kappa (+35% difference)
 - VinDr Imbalanced: 0.4753 kappa
 - VinDr Balanced: 0.7859 kappa
-- Performance gap: +0.3106 kappa (+65% relative improvement)
+- Difference: +0.3106 kappa (+65% difference)
 
-**Interpretation:** High balanced kappa demonstrates that the model successfully learned discriminative ordinal features for all density classes. The substantial gap in imbalanced conditions indicates that reduced performance is primarily a label-shift calibration issue rather than feature inadequacy. The ordinal structure was learned correctly but suppressed by extreme class imbalance.
+**Interpretation:** The balanced kappa results indicate that the model learned ordinal features for the density classes. The difference in imbalanced conditions suggests that the lower performance in those settings is related to class distribution shift rather than feature representation.
 
-### Finding 3: Minority Cancer-Risk Class Detection Remains Robust
+### Section 6.3: Recall on Minority Classes
 
-**Class D (Dense Tissue, Cancer Risk Factor) in IBIA (2% prevalence):**
+**Class D (Dense Tissue) in IBIA (2% prevalence):**
 - CORAL recall: 79.4%
 - CORN recall: 88.2%
 - Cross-entropy recall: 83.8%
@@ -454,35 +452,35 @@ To explain why ConvNeXt + CORAL generalizes better under geographic domain shift
 **Class A (Fatty) in VinDr (0.5% prevalence):**
 - CORAL recall: 82%+
 
-**Clinical Significance:** While per-class recall varies, ordinal methods maintain balanced recall patterns across all classes. This is more important for cancer-risk screening than maximizing single-class recall, as unbiased detection of high-risk populations is essential.
+**Observation:** While per-class recall varies, ordinal methods show a distribution of recall across classes. For screening applications, a balanced recall pattern across all classes is generally preferred.
 
-*Note on class imbalance:* While standard computer vision pipelines often rely on specialized objective functions like Focal Loss (Lin et al., 2017) to force minority-class focus during training, our results demonstrate that ordinal regression acts as a powerful alternative regularization method by exploiting the natural continuous geometry of breast density categories.
+*Note on class imbalance:* Rather than utilizing objective functions like Focal Loss (Lin et al., 2017) to adjust class weights during training, ordinal regression acts as an alternative regularization method by utilizing the ordering of breast density categories.
 
-### Finding 4: Ordinal Advantage Scales with Geographic Shift Severity
+### Section 6.4: Relation to Geographic Shift Severity
 
 **IBIA (moderate shift):**
 - Different class distribution (B-dominant)
-- Ordinal advantage: +35% kappa
+- Difference: +35% kappa
 
 **VinDr (extreme shift):**
-- Extreme C-dominant distribution (76.5% class prevalence)
-- Minimal class A representation (0.5%)
-- Ordinal advantage: +11% kappa
+- C-dominant distribution (76.5% class prevalence)
+- Class A representation (0.5%)
+- Difference: +11% kappa
 
-**Interpretation:** Ordinal advantage is inversely related to geographic shift severity. However, the advantage remains consistent across all conditions, proving the effect is not dataset-specific but a fundamental benefit of rank-aware generalization.
+**Interpretation:** The performance difference varies with geographic shift severity. The performance trend is observed across the evaluated conditions.
 
-### Finding 5: Architecture and Loss Function Interact Synergistically
+### Section 6.5: Architecture and Loss Function Analysis
 
 **IBIA Imbalanced Results:**
 - ResNet50 + CE: 0.3923 kappa
 - ConvNeXt + CE: 0.4885 kappa (Ablation Baseline)
 - ConvNeXt + CORAL: 0.5303 kappa
-- Combined gain: +0.1380 kappa (+35.2%)
+- Total Difference: +0.1380 kappa (+35.2%)
 
 **Attribution:**
-- **Architecture effect:** Upgrading the backbone from ResNet50 to ConvNeXt-Small (under Cross-Entropy) provides a massive improvement of `+0.0962` Kappa (from `0.3923` to `0.4885`), representing ~70% of the total gain. This validates that ConvNeXt's modern inductive biases (inverted bottlenecks, 7×7 kernels, LayerNorm) significantly enhance generalized parenchymal feature extraction.
-- **Loss function effect:** Shifting from Cross-Entropy to CORAL (under ConvNeXt-Small) adds an additional `+0.0418` Kappa (from `0.4885` to `0.5303`), representing ~30% of the total gain. This isolates the robustness boost provided specifically by the rank-consistent ordinal constraint.
-- **Synergistic interaction:** Both architecture capacity and the ordinal constraint are critical for achieving state-of-the-art zero-shot cross-geographic transfer.
+- **Architecture effect:** Upgrading the backbone from ResNet50 to ConvNeXt-Small (under Cross-Entropy) shows an increase of `+0.0962` Kappa (from `0.3923` to `0.4885`), representing ~70% of the total difference. This indicates that the ConvNeXt architecture design contributes to feature extraction.
+- **Loss function effect:** Shifting from Cross-Entropy to CORAL (under ConvNeXt-Small) shows an increase of `+0.0418` Kappa (from `0.4885` to `0.5303`), representing ~30% of the total difference. This shows the effect of the rank-consistent ordinal constraint under the same architecture.
+- **Combined contribution:** Both architecture selection and the loss function choice affect the transfer performance.
 
 ---
 
