@@ -158,6 +158,7 @@ def main():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     checkpoint_paths = {
         'ResNet50_CE': os.path.join(script_dir, '../models/resnet50_ce_balanced.pth'),
+        'ConvNeXt_CE': os.path.join(script_dir, '../models/convnext_small_ce_balanced.pth'),
         'ConvNeXt_CORAL': os.path.join(script_dir, '../models/convnext_small_coral_balanced.pth'),
         'ConvNeXt_CORN': os.path.join(script_dir, '../models/convnext_small_corn_balanced.pth')
     }
@@ -170,6 +171,11 @@ def main():
     resnet50 = get_model('resnet50', 'CE')
     resnet50.load_state_dict(torch.load(checkpoint_paths['ResNet50_CE'], map_location=device))
     models_dict['ResNet50_CE'] = resnet50.to(device)
+    
+    # ConvNeXt + CE
+    convnext_ce = get_model('convnext_small', 'CE')
+    convnext_ce.load_state_dict(torch.load(checkpoint_paths['ConvNeXt_CE'], map_location=device))
+    models_dict['ConvNeXt_CE'] = convnext_ce.to(device)
     
     # ConvNeXt + CORAL
     convnext_coral = get_model('convnext_small', 'CORAL')
@@ -255,20 +261,20 @@ def main():
     print(f"\n✅ All results successfully saved to: {output_path}")
     
     # 8. Print summary comparison table
-    print("\n" + "="*100)
+    print("\n" + "="*120)
     print("COMPREHENSIVE IBIA EVALUATION SUMMARY")
-    print("="*100)
+    print("="*120)
     
-    print(f"\n{'Condition':<15} {'ResNet50+CE':<18} {'ConvNeXt+CORAL':<18} {'ConvNeXt+CORN':<18}")
-    print("-" * 70)
+    print(f"\n{'Condition':<15} {'ResNet50+CE':<18} {'ConvNeXt+CE':<18} {'ConvNeXt+CORAL':<18} {'ConvNeXt+CORN':<18}")
+    print("-" * 90)
     
     for condition, res_data in zip(['Imbalanced', 'Balanced'], all_results):
         res = {
             m: res_data['models'][m]['quadratic_weighted_kappa']
-            for m in ['ResNet50_CE', 'ConvNeXt_CORAL', 'ConvNeXt_CORN']
+            for m in ['ResNet50_CE', 'ConvNeXt_CE', 'ConvNeXt_CORAL', 'ConvNeXt_CORN']
         }
-        print(f"{condition:<15} {res['ResNet50_CE']:<18.4f} {res['ConvNeXt_CORAL']:<18.4f} {res['ConvNeXt_CORN']:<18.4f}")
-    print("="*100)
+        print(f"{condition:<15} {res['ResNet50_CE']:<18.4f} {res['ConvNeXt_CE']:<18.4f} {res['ConvNeXt_CORAL']:<18.4f} {res['ConvNeXt_CORN']:<18.4f}")
+    print("="*120)
 
 if __name__ == '__main__':
     main()

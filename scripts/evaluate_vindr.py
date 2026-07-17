@@ -162,6 +162,7 @@ def main():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     checkpoint_paths = {
         'ResNet50_CE': os.path.join(script_dir, '../models/resnet50_ce_balanced.pth'),
+        'ConvNeXt_CE': os.path.join(script_dir, '../models/convnext_small_ce_balanced.pth'),
         'ConvNeXt_CORAL': os.path.join(script_dir, '../models/convnext_small_coral_balanced.pth'),
         'ConvNeXt_CORN': os.path.join(script_dir, '../models/convnext_small_corn_balanced.pth')
     }
@@ -174,6 +175,11 @@ def main():
     resnet50 = get_model('resnet50', 'CE')
     resnet50.load_state_dict(torch.load(checkpoint_paths['ResNet50_CE'], map_location=device))
     models_dict['ResNet50_CE'] = resnet50.to(device)
+    
+    # ConvNeXt + CE
+    convnext_ce = get_model('convnext_small', 'CE')
+    convnext_ce.load_state_dict(torch.load(checkpoint_paths['ConvNeXt_CE'], map_location=device))
+    models_dict['ConvNeXt_CE'] = convnext_ce.to(device)
     
     # ConvNeXt + CORAL
     convnext_coral = get_model('convnext_small', 'CORAL')
@@ -237,51 +243,60 @@ def main():
             
     print(f"✅ Created Balanced VinDr split with {len(balanced_mapping)} images ({minority_size} per class)")
     
-    # 7. Run Evaluations
+    # 7. Create subsampled imbalanced mapping for evaluation speed (3,000 images)
+    imbalanced_mapping = image_mapping.copy()
+    np.random.seed(42)
+    keys = list(imbalanced_mapping.keys())
+    if len(keys) > 3000:
+        sampled_keys = np.random.choice(keys, size=3000, replace=False)
+        imbalanced_mapping = {k: imbalanced_mapping[k] for k in sampled_keys}
+        print(f"👉 Subsampled imbalanced dataset to {len(imbalanced_mapping)} random images for evaluation speed.")
+    
+    # 8. Run Evaluations
     all_results = []
     
     # Imbalanced
-    results_imb = evaluate_on_dataset(models_dict, image_mapping, 'VinDr', 'Imbalanced', device)
+    results_imb = evaluate_on_dataset(models_dict, imbalanced_mapping, 'VinDr', 'Imbalanced', device)
     all_results.append(results_imb)
     
     # Balanced
     results_bal = evaluate_on_dataset(models_dict, balanced_mapping, 'VinDr', 'Balanced', device)
     all_results.append(results_bal)
-    
     # Save output to JSON
     output_path = "/home/tanuh/Desktop/VINDR_EVALUATION_RESULTS.json"
+    import json
     with open(output_path, 'w') as f:
         json.dump(all_results, f, indent=2)
     print(f"\n✅ All results successfully saved to: {output_path}")
     
     # 8. Print comparison table
-    print("\n" + "="*100)
+    print("\n" + "="*120)
     print("COMPREHENSIVE RESULTS COMPARISON SUMMARY")
-    print("="*100)
+    print("="*120)
     
-    # IBIA reference results
+    # IBIA reference results (updated with ConvNeXt_CE)
     ibia_results = {
-        'Imbalanced': {'ResNet50_CE': 0.3733, 'ConvNeXt_CORAL': 0.5078, 'ConvNeXt_CORN': 0.4774},
-        'Balanced': {'ResNet50_CE': 0.5088, 'ConvNeXt_CORAL': 0.7206, 'ConvNeXt_CORN': 0.6939}
+        'Imbalanced': {'ResNet50_CE': 0.3733, 'ConvNeXt_CE': 0.4889, 'ConvNeXt_CORAL': 0.5078, 'ConvNeXt_CORN': 0.4774},
+        'Balanced': {'ResNet50_CE': 0.5088, 'ConvNeXt_CE': 0.6419, 'ConvNeXt_CORAL': 0.7206, 'ConvNeXt_CORN': 0.6939}
     }
     
-    print(f"\n{'Dataset':<15} {'Condition':<15} {'ResNet50+CE':<18} {'ConvNeXt+CORAL':<18} {'ConvNeXt+CORN':<18}")
-    print("-" * 100)
+    print(f"\n{'Dataset':<15} {'Condition':<15} {'ResNet50+CE':<18} {'ConvNeXt+CE':<18} {'ConvNeXt+CORAL':<18} {'ConvNeXt+CORN':<18}")
+    print("-" * 120)
     
     # IBIA
     for condition in ['Imbalanced', 'Balanced']:
         res = ibia_results[condition]
-        print(f"{'IBIA':<15} {condition:<15} {res['ResNet50_CE']:<18.4f} {res['ConvNeXt_CORAL']:<18.4f} {res['ConvNeXt_CORN']:<18.4f}")
+        print(f"{'IBIA':<15} {condition:<15} {res['ResNet50_CE']:<18.4f} {res['ConvNeXt_CE']:<18.4f} {res['ConvNeXt_CORAL']:<18.4f} {res['ConvNeXt_CORN']:<18.4f}")
         
     # VinDr
     for condition, res_data in zip(['Imbalanced', 'Balanced'], all_results):
         res = {
             m: res_data['models'][m]['quadratic_weighted_kappa']
-            for m in ['ResNet50_CE', 'ConvNeXt_CORAL', 'ConvNeXt_CORN']
+            for m in ['ResNet50_CE', 'ConvNeXt_CE', 'ConvNeXt_CORAL', 'ConvNeXt_CORN']
         }
-        print(f"{'VinDr':<15} {condition:<15} {res['ResNet50_CE']:<18.4f} {res['ConvNeXt_CORAL']:<18.4f} {res['ConvNeXt_CORN']:<18.4f}")
+        print(f"{'VinDr':<15} {condition:<15} {res['ResNet50_CE']:<18.4f} {res['ConvNeXt_CE']:<18.4f} {res['ConvNeXt_CORAL']:<18.4f} {res['ConvNeXt_CORN']:<18.4f}")
         
-    print("\n" + "="*100)
+    print("\n" + "="*120)
 
 if __name__ == '__main__':
     main()
